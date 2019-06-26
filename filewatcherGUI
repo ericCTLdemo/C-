@@ -1,0 +1,110 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.IO;
+using System.Configuration;
+
+namespace DirectoryWatcher
+{
+    public partial class Form1 : Form
+    {
+        public static string Path = "";
+        public static string Filter = "";
+        public static bool IncludeSubs = false;
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void ButtonStart_Click(object sender, EventArgs e)
+        {
+            if (directoryToMonitor.Text == "")
+            {
+                MessageBox.Show("Please Enter a directory");
+                return;
+            }
+            else
+            {
+                Path = directoryToMonitor.Text;
+            }
+            if (fileFilterList.SelectedItem != null)
+            {
+                string selectedfilter = fileFilterList.SelectedItem.ToString();
+                Filter = fileFilterList.SelectedItem.ToString();
+            }
+            else
+            {
+                Filter = "*.*";
+            }
+            if (subdirectoriesAreIncluded.Checked == true)
+            {
+                IncludeSubs = true;
+            }
+            else
+            {
+                IncludeSubs = false;
+            }
+            //set the properties on the monitor.
+            FileMonitor.Path = Path.ToString();
+            FileMonitor.Filter = Filter.ToString();
+            FileMonitor.IncludeSubdirectories = IncludeSubs;
+            FileMonitor.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite |
+                NotifyFilters.FileName | NotifyFilters.DirectoryName;
+
+            //compound assignment operator
+            //  x = x + 1;
+           // x += 1;
+            this.FileMonitor.Deleted += new FileSystemEventHandler(this.FileMonitor_Changed);
+            this.FileMonitor.Renamed += new RenamedEventHandler(this.FileMonitor_OnRenamed);
+            this.FileMonitor.Changed += new FileSystemEventHandler(this.FileMonitor_Changed);
+            this.FileMonitor.Created += new FileSystemEventHandler(this.FileMonitor_Changed);
+            
+
+
+            //Begin Monitoring.
+            FileMonitor.EnableRaisingEvents = true;
+            MessageBox.Show("Directory Monitoring Started... ");
+          }
+        private void FileMonitor_OnRenamed(object source, RenamedEventArgs e)
+        { 
+                    // Specify what is done when a file is renamed.
+             string originalname = e.OldFullPath;
+             string renamed = e.FullPath;
+             MessageBox.Show("File: " + originalname + " renamed to " + renamed, e.OldName + "Renamed");
+        }
+       
+    
+        private void FileMonitor_Changed(object sender, FileSystemEventArgs e)
+             {
+             string ChangeType = e.ChangeType.ToString();
+             //display a message box for the appropriate changetype.
+             if (ChangeType == "Created")
+                {
+             MessageBox.Show("File: " + e.FullPath + " " + e.ChangeType, e.Name + "Created");
+                }
+             else if (ChangeType == "Deleted")
+                {
+             MessageBox.Show("File: " + e.FullPath + " " + e.ChangeType, e.Name + "Deleted");
+                }
+             else if (ChangeType == "Changed")
+                {
+             MessageBox.Show("File: " + e.FullPath + " " + e.ChangeType, e.Name + "Changed");
+                }
+             }
+
+        private void ButtonStop_Click(object sender, EventArgs e)
+        {
+            //Stop monitoring.
+            FileMonitor.EnableRaisingEvents = false;
+            MessageBox.Show("Directory Monitoring Ended...");
+        }
+           
+
+    }
+}
